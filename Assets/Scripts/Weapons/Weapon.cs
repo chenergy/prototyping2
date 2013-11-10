@@ -5,19 +5,15 @@ public abstract class Weapon : MonoBehaviour
 {
 	public Transform 	shootLocation;
 	public GameObject 	projectile;
-	public float		weaponSpeed = 1.0f;
-	public float		firingInterval = 0.25f;
-	
-	private float 		firingTimer = 0.0f;
+	public float		weaponSpeed 	= 1.0f;
+	public float		firingInterval 	= 0.25f;
+	public float		damage 			= 10.0f;
+	public float		variance		= 3.0f;
 	
 	// Update is called once per frame
 	protected virtual void Update ()
 	{
-		if (Input.GetMouseButton(0)){
-			this.firingTimer += Time.deltaTime;
-		}else{
-			this.firingTimer = this.firingInterval;
-		}
+
 	}
 	
 	void OnDrawGizmos(){
@@ -25,12 +21,13 @@ public abstract class Weapon : MonoBehaviour
 	}
 	
 	public virtual void Fire(){
-		if (this.firingTimer >= this.firingInterval){
-			GameObject newProjectile = GameObject.Instantiate(this.projectile, this.shootLocation.position, this.projectile.transform.rotation) as GameObject;
-			newProjectile.rigidbody.velocity = Camera.main.transform.forward * this.weaponSpeed;
-			GameObject.Destroy( newProjectile, 2.0f );
-			this.firingTimer = 0.0f;
-		}
+		float varianceX = Random.Range (-this.variance, this.variance);
+		float varianceY = Random.Range (-this.variance, this.variance);
+		GameObject newProjectile = GameObject.Instantiate(this.projectile, this.shootLocation.position, this.projectile.transform.rotation) as GameObject;
+		newProjectile.rigidbody.velocity = this.transform.parent.forward * this.weaponSpeed + new Vector3 (varianceX, varianceY, 0.0f);
+		ProjectileTrigger script = newProjectile.GetComponent<ProjectileTrigger> ();
+		script.damage = this.damage;
+		GameObject.Destroy( newProjectile, 2.0f );
 	}
 }
 

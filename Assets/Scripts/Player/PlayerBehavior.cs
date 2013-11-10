@@ -47,33 +47,32 @@ public class PlayerBehavior : MonoBehaviour
 		Destroy (other.gameObject);
 	}
 
-	public void ChangeHP(float Change)
+	public void ChangeHP(float change)
 	{
-		// Takes whatever value is passed to this function and add it to curHP.
-		curHP += Change;
+		Debug.Log ("HP changed. New HP: " + this.curHP);
+		this.curHP += change;
 
-		// Don't go over the max health
-		if (curHP > maxHP) {
-			curHP = 100;
+		if (this.curHP > this.maxHP) {
+			this.curHP = this.maxHP;
 		}
 
-		// Ccheck if the player has died
-		if (curHP <= 0) {
-			// Die
+		if (this.curHP <= 0) {
+			this.curHP = 0;
 			Debug.Log ("Player has died!");
 		}
 	}
 
-	public void ChangeAmmo(float Change)
+	public void ChangeAmmo(float change)
 	{
+		Debug.Log ("Ammo changed. New Ammo: " + this.curHP);
+		this.curAmmo += change;
 
-		curAmmo += Change;
-
-		if (curAmmo > maxAmmo) {
-			curAmmo = 100;
+		if (this.curAmmo > this.maxHP) {
+			this.curAmmo = this.maxHP;
 		}
 
-		if (curAmmo <= 0) {
+		if (this.curAmmo <= 0) {
+			this.curAmmo = 0;
 			Debug.Log ("Out of Ammo!");
 		}
 	}

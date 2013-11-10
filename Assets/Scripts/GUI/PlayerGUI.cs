@@ -11,6 +11,7 @@ public class PlayerGUI : MonoBehaviour
 
 	void Start(){
 		this.damageMesh.renderer.material.color = new Color(255, 0, 0, 0);
+		this.damageMesh.renderer.enabled = true;
 	}
 
 	// Update is called once per frame
@@ -25,7 +26,7 @@ public class PlayerGUI : MonoBehaviour
 	}
 
 	public void ActivateDamageMesh(){
-		this.damageMesh.renderer.material.color = new Color(255, 0, 0, 1);
+		this.damageMesh.renderer.material.color = new Color(255.0f, 0.0f, 0.0f, 0.5f);
 	}
 }
 

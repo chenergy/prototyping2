@@ -55,12 +55,14 @@ public class EnemyMovementBehavior : MonoBehaviour
 					this.idleTimer = 0.0f;
 					this.state = EnemyStates.IDLE;
 				} else {
+					this.mesh.animation.Play ("walk");
 					this.Patrol ();
 				}
 			}
 			break;
 		case EnemyStates.ATTACK:
 			if ((this.controller.transform.position - this.player.transform.position).magnitude > this.maxMoveRange) {
+				this.mesh.animation.Play ("walk");
 				this.MoveTowardsPlayer ();
 			}
 			this.Attack();

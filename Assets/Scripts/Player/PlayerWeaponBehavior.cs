@@ -12,7 +12,10 @@ public class PlayerWeaponBehavior : WeaponBehavior
 	// Update is called once per frame
 	protected virtual void Update ()
 	{
-		if (Input.GetMouseButton(0)){
+		if (Input.GetMouseButton (0)) {
+			this.weaponObject.transform.position = Vector3.Lerp (this.weaponObject.transform.position, 
+			                                                     Camera.main.transform.TransformPoint (new Vector3 (0.2f, -0.7f, 0.0f)),
+			                                                     Time.deltaTime * 5);
 			if (this.weaponScript != null) {
 				this.firingTimer += Time.deltaTime;
 				if (this.firingTimer >= this.weaponScript.firingInterval) {
@@ -22,7 +25,10 @@ public class PlayerWeaponBehavior : WeaponBehavior
 			} else {
 				this.firingTimer = this.weaponScript.firingInterval;
 			}
+		} else {
+			this.weaponObject.transform.position = Vector3.Lerp (this.weaponObject.transform.position, this.weaponLocation.position, Time.deltaTime * 5);
 		}
+
 		base.Update();
 	}
 }

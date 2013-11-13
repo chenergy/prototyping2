@@ -11,20 +11,9 @@ public class WeaponBehavior : MonoBehaviour
 	// Use this for initialization
 	protected virtual void Start ()
 	{
-		if (this.weaponObject != null){
-			this.weaponObject = GameObject.Instantiate(this.weaponObject, this.weaponLocation.position, this.weaponObject.transform.rotation) as GameObject;
-			if (this.tag == "Player")
-				this.weaponObject.transform.parent = Camera.main.transform;
-			else{
-				foreach (Transform t in this.GetComponentsInChildren<Transform>()) {
-					if (t.name == "Mesh") {
-						this.weaponObject.transform.parent = t;
-						break;
-					}
-				}
-			}
-			this.weaponScript = weaponObject.GetComponent<Weapon>();
-		}
+		//if (this.weaponObject != null){
+		this.LoadWeapon (this.weaponObject.GetComponent<Weapon> ().type);
+		//}
 	}
 	
 	// Update is called once per frame
@@ -35,6 +24,31 @@ public class WeaponBehavior : MonoBehaviour
 	
 	void OnDrawGizmos(){
 		//Gizmos.DrawCube(this.weaponLocation.position, Vector3.one * 0.25f);
+	}
+
+	public void LoadWeapon(WeaponType type){
+		switch(type){
+		case WeaponType.MAIN:
+			this.weaponObject = GameObject.Instantiate(Resources.Load("Weapons/MainWeapon", typeof(GameObject)) as GameObject, this.weaponLocation.position, this.transform.rotation) as GameObject;
+			break;
+		case WeaponType.ROCKET:
+			this.weaponObject = GameObject.Instantiate(Resources.Load("Weapons/RocketWeapon", typeof(GameObject)) as GameObject, this.weaponLocation.position, this.transform.rotation) as GameObject;
+			break;
+		default:
+			break;
+		}
+
+		if (this.tag == "Player") {
+			this.weaponObject.transform.parent = Camera.main.transform;
+		}
+		else{
+			EnemyMovementBehavior behavior = this.GetComponent<EnemyMovementBehavior> ();
+			this.weaponObject.transform.parent = this.weaponLocation.transform;
+			this.weaponObject.transform.localPosition = Vector3.zero;
+		}
+		this.weaponScript = weaponObject.GetComponent<Weapon>();
+		this.weaponScript.source = this.gameObject;
+		this.firingTimer = this.weaponScript.firingInterval;
 	}
 }
 

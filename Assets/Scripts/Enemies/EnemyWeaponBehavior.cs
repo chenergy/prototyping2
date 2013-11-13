@@ -5,14 +5,14 @@ public class EnemyWeaponBehavior : WeaponBehavior
 {
 	private EnemyMovementBehavior behavior;
 	// Use this for initialization
-	protected virtual void Start ()
+	protected override void Start ()
 	{
 		this.behavior = this.GetComponent<EnemyMovementBehavior> ();
 		base.Start ();
 	}
 	
 	// Update is called once per frame
-	protected virtual void Update ()
+	protected override void Update ()
 	{
 		if (this.behavior.state == EnemyStates.ATTACK) {
 			if (this.weaponScript != null) {

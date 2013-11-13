@@ -1,5 +1,9 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+
+public enum WeaponType{ MAIN, ROCKET };
+public enum AllyType{ MECHA, ORB };
 
 public class PlayerBehavior : MonoBehaviour
 {
@@ -7,13 +11,24 @@ public class PlayerBehavior : MonoBehaviour
 	private float curHP		= 100f;
 	private float maxHP		= 100f;
 	private float maxBAR	= 100f;
-	private float curAmmo	= 100f;
-	private float maxAmmo	= 100f;
 	private float HealthBarLength;
-
+	
+	private int[] allies;
+	private int[] curClipAmmo;
+	private int[] maxClipAmmo;
+	private int[] curTotalWeaponAmmo;
+	private int[] maxTotalWeaponAmmo;
+	private bool[] activatedWeapons;
+	
 	// Use this for initialization
 	void Start ()
 	{
+		this.allies 			= new int[] { 0, 0 }; // 0 = MECHA, 1 = ORB
+		this.curClipAmmo 		= new int[] { 16, 0 }; // 0 = MAIN, 1 = ROCKET
+		this.maxClipAmmo 		= new int[] { 16, 4 };
+		this.curTotalWeaponAmmo = new int[] { 64, 0 }; 
+		this.maxTotalWeaponAmmo = new int[] { 64, 16 };
+		this.activatedWeapons	= new bool[] { true, false };
 	}
 
 	// Update is called once per frame
@@ -28,23 +43,21 @@ public class PlayerBehavior : MonoBehaviour
 		// Determines the length of the health bar
 		HealthBarLength = curHP * maxBAR / maxHP;
 	}
-
-	// Checks if the player has entered a trigger for pickup
+	
 	void OnTriggerEnter(Collider other)
 	{
-		// Checks what tag the other gameobject is, and reacts accordingly.
 		switch (other.gameObject.tag) {
-		case "HealthPickup": // The gameobject tag: "Heal 25%"
-			ChangeHP (25);
+		case "HealthPickup":
+			ChangeHP (50);
+			GameObject.Destroy (other.gameObject);
 			break;
-		case "AmmoPickup": // The gameobject tag: "Small Ammo"
+		case "AmmoPickup":
 			ChangeAmmo (25);
+			GameObject.Destroy (other.gameObject);
 			break;
 		default:
 			break;
 		}
-		// Destroys the gameObject the player collided with.
-		Destroy (other.gameObject);
 	}
 
 	public void ChangeHP(float change)
@@ -64,6 +77,8 @@ public class PlayerBehavior : MonoBehaviour
 
 	public void ChangeAmmo(float change)
 	{
+		this.RechargeAmmo ();
+		/*
 		Debug.Log ("Ammo changed. New Ammo: " + this.curHP);
 		this.curAmmo += change;
 
@@ -74,6 +89,74 @@ public class PlayerBehavior : MonoBehaviour
 		if (this.curAmmo <= 0) {
 			this.curAmmo = 0;
 			Debug.Log ("Out of Ammo!");
+		}
+		*/
+	}
+
+	/*
+	 * this.allies contains an array of the number of allies
+	 * that the player can spawn at a location.
+	 * [0] = Mecha
+	 * [1] = Orb
+	 */
+	public void AddAllyEnemy(AllyType ally){
+		switch (ally) {
+		case AllyType.MECHA:
+			break;
+		case AllyType.ORB:
+			break;
+		default:
+			break;
+		}
+	}
+
+	public void SummonAlly(AllyType ally){
+		switch (ally) {
+		case AllyType.MECHA:
+			break;
+		case AllyType.ORB:
+			break;
+		default:
+			break;
+		}
+	}
+
+	public void PickupWeapon (WeaponType weapon){
+		PlayerWeaponBehavior weaponBehavior = this.GetComponent<PlayerWeaponBehavior> ();
+
+		if (weaponBehavior.weaponObject.GetComponent<Weapon> ().type == weapon) {
+			this.RechargeAmmo ();
+		} else {
+			this.EquipWeapon (weapon);
+		}
+	}
+
+	private void EquipWeapon (WeaponType weapon){
+		PlayerWeaponBehavior weaponBehavior = this.GetComponent<PlayerWeaponBehavior> ();
+
+		GameObject.Destroy (weaponBehavior.weaponObject);
+		weaponBehavior.LoadWeapon (weapon);
+		if (this.activatedWeapons [(int)weapon] == false) {
+			this.activatedWeapons [(int)weapon] = true;
+		}
+	}
+
+	public void RechargeAmmo(){
+		for (int i = 0; i < this.curTotalWeaponAmmo.Length; i++) {
+			this.curTotalWeaponAmmo [i] = this.maxTotalWeaponAmmo [i];
+		}
+	}
+
+	private void Reload(){
+
+	}
+
+	private void SwitchWeapons(){
+		PlayerWeaponBehavior weaponBehavior = this.GetComponent<PlayerWeaponBehavior> ();
+		if (weaponBehavior.weaponObject.GetComponent<Weapon> ().type == WeaponType.MAIN) {
+			if (this.activatedWeapons [1] == true) {
+
+			}
 		}
 	}
 }

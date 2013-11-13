@@ -4,13 +4,13 @@ using System.Collections;
 public class PlayerWeaponBehavior : WeaponBehavior
 {
 	// Use this for initialization
-	protected virtual void Start ()
+	protected override void Start ()
 	{
 		base.Start();
 	}
 	
 	// Update is called once per frame
-	protected virtual void Update ()
+	protected override void Update ()
 	{
 		if (Input.GetMouseButton (0)) {
 			this.weaponObject.transform.position = Vector3.Lerp (this.weaponObject.transform.position, 
@@ -22,11 +22,15 @@ public class PlayerWeaponBehavior : WeaponBehavior
 					this.weaponScript.Fire ();
 					this.firingTimer = 0.0f;
 				}
-			} else {
-				this.firingTimer = this.weaponScript.firingInterval;
 			}
+			/* else {
+				this.firingTimer = this.weaponScript.firingInterval;
+			}*/
 		} else {
 			this.weaponObject.transform.position = Vector3.Lerp (this.weaponObject.transform.position, this.weaponLocation.position, Time.deltaTime * 5);
+			if (this.firingTimer < this.weaponScript.firingInterval) {
+				this.firingTimer += Time.deltaTime;
+			}
 		}
 
 		base.Update();

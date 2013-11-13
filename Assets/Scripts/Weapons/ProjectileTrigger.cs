@@ -4,6 +4,8 @@ using System.Collections;
 public class ProjectileTrigger : MonoBehaviour {
 	[HideInInspector]
 	public float damage;
+	[HideInInspector]
+	public GameObject source;
 
 	public GameObject particles;
 
@@ -11,11 +13,19 @@ public class ProjectileTrigger : MonoBehaviour {
 		switch (other.tag){
 		case "Enemy":
 			EnemyMovementBehavior enemyScript = other.GetComponent<EnemyMovementBehavior> ();
+			if (enemyScript.isAlly) {
+				if (this.source.Equals(GameObject.FindGameObjectWithTag("Player"))){
+					enemyScript.target = this.source;
+				}
+			} else {
+				enemyScript.target = GameObject.FindGameObjectWithTag ("Player");
+			}
 			enemyScript.TakeDamage (this.damage);
 			GameObject enemyParticles = GameObject.Instantiate (this.particles, 
 			                                                    this.transform.position, 
 			                                                    this.particles.transform.rotation) as GameObject;
 			GameObject.Destroy (enemyParticles, 1.0f);
+			GameObject.Destroy (this.gameObject);
 			break;
 		case "Player":
 			PlayerBehavior playerScript = other.GetComponent<PlayerBehavior> ();
@@ -26,6 +36,14 @@ public class ProjectileTrigger : MonoBehaviour {
 			                                                     this.transform.position, 
 			                                                     this.particles.transform.rotation) as GameObject;
 			GameObject.Destroy (playerParticles, 1.0f);
+			GameObject.Destroy (this.gameObject);
+			break;
+		case "Obstacle":
+			GameObject obstacleParticles = GameObject.Instantiate (this.particles, 
+			                                                       this.transform.position, 
+			                                                       this.particles.transform.rotation) as GameObject;
+			GameObject.Destroy (obstacleParticles, 1.0f);
+			GameObject.Destroy (this.gameObject);
 			break;
 		default:
 			break;

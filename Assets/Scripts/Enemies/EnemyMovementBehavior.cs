@@ -10,8 +10,10 @@ public class EnemyMovementBehavior : MonoBehaviour
 {
 	public GameObject			mesh;
 	public GameObject			sparks;
+	public GameObject 			deathParticles;
 	public Transform[]			sparkPoints;
 	public Transform[]			patrolPoints;
+	public bool 				useGravity 			= true;
 	public float 				maxMoveRange 		= 5.0f;
 	public float				patrolRange 		= 5.0f;
 	public float				patrolIdleTime 		= 2.0f;
@@ -22,13 +24,14 @@ public class EnemyMovementBehavior : MonoBehaviour
 	
 	[HideInInspector]
 	public EnemyStates 			state = EnemyStates.IDLE;
-
 	[HideInInspector]
 	public	bool 				isAlly = false;
+	[HideInInspector]
+	public GameObject			target;
 
 	private Transform			targetPatrolPoint;
 	private CharacterController controller;
-	private GameObject			player;
+	private float 				startY;
 	private int 				currentPatrolPointNum 	= 0;
 	private float				idleTimer 				= 0;
 	private float				paralyzedTimer 			= 0;
@@ -37,7 +40,7 @@ public class EnemyMovementBehavior : MonoBehaviour
 	
 	void Start(){
 		this.controller = this.GetComponent<CharacterController>();
-		this.player = GameObject.FindGameObjectWithTag ("Player");
+		this.startY = this.controller.transform.position.y;
 	}
 	
 	void Update(){
@@ -45,52 +48,65 @@ public class EnemyMovementBehavior : MonoBehaviour
 		if (this.health <= 0.0f)
 			this.state = EnemyStates.DEATH;
 
-		//this.AddGravity ();
+		if (this.useGravity) {
+			/*this.controller.transform.position = new Vector3 (this.controller.transform.position.x,
+			                                                 this.startY,
+			                                                 this.controller.transform.position.z);*/
+			this.AddGravity ();
+		}
 
 		// State Machine control system
 		switch (this.state){
 		case EnemyStates.PATROL:
-			if (this.patrolPoints.Length > 0) {
-				if ((this.controller.transform.position - this.targetPatrolPoint.transform.position).magnitude < 0.1f) {
-					this.idleTimer = 0.0f;
-					this.state = EnemyStates.IDLE;
-				} else {
-					this.mesh.animation.Play ("walk");
-					this.Patrol ();
+			if (!this.isAlly) {
+				if (this.patrolPoints.Length > 0) {
+					if ((this.controller.transform.position - new Vector3(this.targetPatrolPoint.transform.position.x,
+					                                                      this.controller.transform.position.y,
+					                                                      this.targetPatrolPoint.transform.position.z)).magnitude < 0.1f) {
+						this.idleTimer = 0.0f;
+						this.state = EnemyStates.IDLE;
+					} else {
+						if (this.mesh.animation.GetClip("walk") != null) 
+							this.mesh.animation.Play ("walk");
+						this.Patrol ();
+					}
 				}
 			}
 			break;
 		case EnemyStates.ATTACK:
-			if ((this.controller.transform.position - this.player.transform.position).magnitude > this.maxMoveRange) {
-				this.mesh.animation.Play ("walk");
-				this.MoveTowardsPlayer ();
+			if ((this.controller.transform.position - this.target.transform.position).magnitude > this.maxMoveRange) {
+				if (this.mesh.animation.GetClip("walk") != null) 
+					this.mesh.animation.Play ("walk");
+				this.MoveTowardsTarget ();
 			}
-			this.Attack();
+			this.AttackTarget();
 			break;
 		case EnemyStates.IDLE:
-			if (this.idleTimer >= this.patrolIdleTime){
-				this.SetNewPatrolPoint ();
-				this.state = EnemyStates.PATROL;
-			}else{
-				this.idleTimer += Time.deltaTime;
+			this.mesh.animation.Stop ();
+			if (!this.isAlly) {
+				if (this.idleTimer >= this.patrolIdleTime) {
+					this.SetNewPatrolPoint ();
+					this.state = EnemyStates.PATROL;
+				} else {
+					this.idleTimer += Time.deltaTime;
+				}
 			}
 			break;
 		case EnemyStates.PARALYZED:
-			if (this.paralyzedTimer >= this.paralyzedDuration) {
-				this.paralyzedTimer = 0.0f;
-				this.sparkTimer = 0.0f;
-				this.state = EnemyStates.ATTACK;
-			} else {
-				if (this.sparkTimer >= 1.0f) {
-					foreach (Transform sparkLocation in this.sparkPoints) {
-						GameObject newSpark = GameObject.Instantiate (this.sparks, sparkLocation.position, this.sparks.transform.rotation) as GameObject;
-						GameObject.Destroy (newSpark, 0.75f);
-					}
+			if (!this.isAlly){
+				if (this.paralyzedTimer >= this.paralyzedDuration) {
+					this.paralyzedTimer = 0.0f;
 					this.sparkTimer = 0.0f;
+					this.state = EnemyStates.ATTACK;
 				} else {
-					this.sparkTimer += Time.deltaTime;
+					if (this.sparkTimer >= 1.0f) {
+						this.CreateSparks ();
+						this.sparkTimer = 0.0f;
+					} else {
+						this.sparkTimer += Time.deltaTime;
+					}
+					this.paralyzedTimer += Time.deltaTime;
 				}
-				this.paralyzedTimer += Time.deltaTime;
 			}
 			break;
 		case EnemyStates.DEATH:
@@ -125,33 +141,46 @@ public class EnemyMovementBehavior : MonoBehaviour
 		this.currentPatrolPointNum += this.patrolListDirection;
 	}
 
-	private void MoveTowardsPlayer(){
-		this.controller.Move( (this.player.transform.position - this.controller.transform.position).normalized * this.moveSpeed * Time.deltaTime );
+	private void MoveTowardsTarget(){
+		this.controller.Move( (this.target.transform.position - this.controller.transform.position).normalized * this.moveSpeed * Time.deltaTime );
 	}
 
-	private void Attack(){
+	private void AttackTarget(){
 		this.controller.transform.rotation = Quaternion.Slerp (this.controller.transform.rotation,
-		                                                       Quaternion.LookRotation ((this.player.transform.position - this.controller.transform.position)),
-		                                                       Time.deltaTime * 2.0f);
+		                                                       Quaternion.LookRotation ((new Vector3 (this.target.transform.position.x,
+		                                                                                             this.controller.transform.position.y,
+		                                                                                             this.target.transform.position.z) - this.controller.transform.position)),
+		                                                       Time.deltaTime * 5.0f);
 	}
 
 	private void Patrol(){
-		this.controller.transform.rotation = Quaternion.Slerp (this.controller.transform.rotation,
-		                                                       Quaternion.LookRotation ((this.targetPatrolPoint.transform.position - this.controller.transform.position)),
-		                                                       Time.deltaTime);
-		this.controller.Move( (this.targetPatrolPoint.transform.position - this.controller.transform.position).normalized * this.moveSpeed * Time.deltaTime );
+		Quaternion targetRotation = Quaternion.Slerp (this.controller.transform.rotation,
+		                                              Quaternion.LookRotation ((new Vector3 (this.targetPatrolPoint.transform.position.x,
+		                                                                                     this.controller.transform.position.y,
+		                                                                                     this.targetPatrolPoint.transform.position.z) - this.controller.transform.position)),
+		                                              Time.deltaTime * 5.0f);
+		this.controller.transform.Rotate (targetRotation.eulerAngles - this.controller.transform.rotation.eulerAngles);
+		this.controller.Move( (new Vector3(this.targetPatrolPoint.transform.position.x, 
+		                                   this.controller.transform.position.y,
+		                                   this.targetPatrolPoint.transform.position.z) - this.controller.transform.position).normalized * this.moveSpeed * Time.deltaTime );
 	}
 
 	private void Death(){
+
 		GameObject.Destroy (this.gameObject);
 	}
 
 	private void AddGravity(){
-		this.controller.transform.position += Physics.gravity * Time.deltaTime;
+		if (!this.controller.isGrounded) {
+			this.controller.Move (Physics.gravity * Time.deltaTime);
+		}
 	}
 
 	private void CreateSparks(){
-
+		foreach (Transform sparkLocation in this.sparkPoints) {
+			GameObject newSpark = GameObject.Instantiate (this.sparks, sparkLocation.position, this.sparks.transform.rotation) as GameObject;
+			GameObject.Destroy (newSpark, 0.75f);
+		}
 	}
 }
 
